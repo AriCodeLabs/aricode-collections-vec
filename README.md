@@ -1,37 +1,71 @@
-# aricode-stdlib / collections-vec
+# aricode-collections-vec
 
-Dynamic integer vector for aricode, built on `arr_*` builtins.
+Dynamic integer vector for the
+[aricode](https://github.com/Lynx-Boss/aricode) compiler, built on the
+`arr_*` heap-array builtins.
 
-Uses a simple layout: `arr[0]` = length, `arr[1]` = capacity,
-`arr[2..]` = elements.
+## Layout
 
-## Functions
+```
+aricode-collections-vec/
+├── vec.ari            — vec_new, vec_len, vec_push, vec_get, vec_set, vec_sum
+├── examples/
+│   └── sum_demo.ari   — push + sum quick tour
+└── tests/
+    └── test_vec.ari
+```
+
+## Design
+
+Backing store is a flat `arr_new` allocation with the first two slots
+reserved as a header:
+
+| Slot | Meaning |
+|------|---------|
+| `arr[0]` | length |
+| `arr[1]` | capacity |
+| `arr[2..]` | elements |
+
+Current implementation uses a **fixed capacity of 8** (no realloc
+builtin yet); `vec_push` returns `-1` when the vector is full. Grow
+support is on the roadmap once a resizable-array builtin lands.
+
+## Public API
 
 | Function | Signature | Description |
-|---|---|---|
-| `vec_new` | `() -> i32` | Create a new empty vector (capacity 8). |
-| `vec_len` | `(v: i32) -> i32` | Return the number of elements. |
-| `vec_push` | `(v: i32, value: i32) -> i32` | Append a value; returns new length or -1 if full. |
-| `vec_get` | `(v: i32, index: i32) -> i32` | Read element at index. |
-| `vec_set` | `(v: i32, index: i32, value: i32) -> i32` | Write element at index. |
-| `vec_sum` | `(v: i32) -> i32` | Sum all elements. |
+|----------|-----------|-------------|
+| `vec_new()` | `-> i32` | Create empty vector (capacity 8). |
+| `vec_len(v)` | `-> i32` | Number of elements. |
+| `vec_push(v, x)` | `-> i32` | Append `x`, return new length, or `-1` if full. |
+| `vec_get(v, i)` | `-> i32` | Element at index `i`, or `-1` if out of bounds. |
+| `vec_set(v, i, x)` | `-> i32` | Write element at index `i`; `0` on success, `-1` on OOB. |
+| `vec_sum(v)` | `-> i32` | Sum of all elements. |
 
 ## Usage
 
-```ari
-import "vec.ari";
+```
+import "aricode-collections-vec/vec.ari" as vec;
 
 fn main() -> i32 {
-    let v: i32 = vec_new();
-    vec_push(v, 10);
-    vec_push(v, 20);
-    vec_push(v, 30);
-    print_int(vec_len(v));   // 3
-    print_int(vec_sum(v));   // 60
-    print_int(vec_get(v, 1)); // 20
+    let v: i32 = vec.vec_new();
+    vec.vec_push(v, 10);
+    vec.vec_push(v, 20);
+    print_int(vec.vec_sum(v));    // 30
+    mem_free(v);
     return 0;
 }
 ```
+
+See [`examples/sum_demo.ari`](examples/sum_demo.ari).
+
+## Running the tests
+
+```
+aric tests/test_vec.ari -o /tmp/test_vec
+/tmp/test_vec
+```
+
+Expected output ends with `ALL TESTS PASSED / Failures: 0`.
 
 ## License
 

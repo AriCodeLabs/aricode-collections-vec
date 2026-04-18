@@ -1,0 +1,61 @@
+// aricode-collections-vec: tests/test_vec.ari
+// Exercises vec_new / vec_len / vec_push / vec_get / vec_set / vec_sum.
+
+import "../vec.ari" as vec;
+
+fn check_eq(tag: i32, got: i32, want: i32) -> i32 {
+    str_println(tag);
+    if (got == want) {
+        print_str("  PASS");
+        return 0;
+    }
+    print_str("  FAIL got:");
+    print_int(got);
+    print_str("  want:");
+    print_int(want);
+    return 1;
+}
+
+fn main() -> i32 {
+    let fails: i32 = 0;
+
+    let v: i32 = vec.vec_new();
+
+    fails += check_eq(str_new("empty len"),            vec.vec_len(v),           0);
+
+    vec.vec_push(v, 10);
+    vec.vec_push(v, 20);
+    vec.vec_push(v, 30);
+
+    fails += check_eq(str_new("len after 3 push"),     vec.vec_len(v),           3);
+    fails += check_eq(str_new("get[0]"),               vec.vec_get(v, 0),        10);
+    fails += check_eq(str_new("get[1]"),               vec.vec_get(v, 1),        20);
+    fails += check_eq(str_new("get[2]"),               vec.vec_get(v, 2),        30);
+    fails += check_eq(str_new("sum"),                  vec.vec_sum(v),           60);
+
+    // set + re-read
+    vec.vec_set(v, 1, 99);
+    fails += check_eq(str_new("get after set"),        vec.vec_get(v, 1),        99);
+    fails += check_eq(str_new("sum after set"),        vec.vec_sum(v),           139);
+
+    // out-of-bounds returns -1 (sentinel, cast as 0-1)
+    fails += check_eq(str_new("get OOB"),              vec.vec_get(v, 10),       0 - 1);
+    fails += check_eq(str_new("set OOB"),              vec.vec_set(v, 10, 0),    0 - 1);
+
+    // push past capacity returns -1 (current impl has fixed cap=8)
+    vec.vec_push(v, 4);
+    vec.vec_push(v, 5);
+    vec.vec_push(v, 6);
+    vec.vec_push(v, 7);
+    vec.vec_push(v, 8);                              // v has 8 elements now
+    fails += check_eq(str_new("push over cap"),        vec.vec_push(v, 9),       0 - 1);
+
+    print_str("");
+    print_str("=== RESULTS ===");
+    if (fails == 0) { print_str("ALL TESTS PASSED"); }
+    print_str("Failures:");
+    print_int(fails);
+
+    mem_free(v);
+    return fails;
+}
