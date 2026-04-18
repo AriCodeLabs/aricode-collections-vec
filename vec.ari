@@ -1,0 +1,76 @@
+// aricode-stdlib / collections-vec
+// Dynamic integer vector using arr_* builtins
+// Layout: arr[0] = length, arr[1] = capacity, arr[2..] = elements
+// Uses builtins: arr_new, arr_get, arr_set, arr_len
+
+// vec_new — Create a new empty vector with initial capacity 8.
+// Returns the backing array handle.
+fn vec_new() -> i32 {
+    // 2 header slots + 8 element slots = 10
+    let v: i32 = arr_new(10);
+    arr_set(v, 0, 0);  // length = 0
+    arr_set(v, 1, 8);  // capacity = 8
+    return v;
+}
+
+// vec_len — Return the number of elements in the vector.
+fn vec_len(v: i32) -> i32 {
+    return arr_get(v, 0);
+}
+
+// vec_push — Append a value to the end of the vector.
+// Note: does not grow beyond initial capacity (no realloc builtin yet).
+// Returns the new length.
+fn vec_push(v: i32, value: i32) -> i32 {
+    let len: i32 = arr_get(v, 0);
+    let cap: i32 = arr_get(v, 1);
+
+    if (len >= cap) {
+        // Cannot grow yet; return -1 as error
+        return 0 - 1;
+    }
+
+    // Elements start at index 2
+    arr_set(v, len + 2, value);
+    arr_set(v, 0, len + 1);
+    return len + 1;
+}
+
+// vec_get — Read the element at the given index.
+// Returns the value, or -1 if index is out of bounds.
+fn vec_get(v: i32, index: i32) -> i32 {
+    let len: i32 = arr_get(v, 0);
+    if (index < 0) {
+        return 0 - 1;
+    }
+    if (index >= len) {
+        return 0 - 1;
+    }
+    return arr_get(v, index + 2);
+}
+
+// vec_set — Write a value at the given index.
+// Returns 0 on success, -1 if index is out of bounds.
+fn vec_set(v: i32, index: i32, value: i32) -> i32 {
+    let len: i32 = arr_get(v, 0);
+    if (index < 0) {
+        return 0 - 1;
+    }
+    if (index >= len) {
+        return 0 - 1;
+    }
+    arr_set(v, index + 2, value);
+    return 0;
+}
+
+// vec_sum — Return the sum of all elements in the vector.
+fn vec_sum(v: i32) -> i32 {
+    let len: i32 = arr_get(v, 0);
+    let total: i32 = 0;
+    let i: i32 = 0;
+    while (i < len) {
+        total = total + arr_get(v, i + 2);
+        i = i + 1;
+    }
+    return total;
+}
